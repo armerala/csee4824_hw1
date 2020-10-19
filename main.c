@@ -5,9 +5,9 @@
 #define REPEAT 1000000
 
 // opens a csv output file
-char time_buf[128];
-char fname_buf[255];
-FILE* open_data_file(const char* fname_stem)
+char timeBuf[128];
+char fnameBuf[255];
+FILE* open_data_file(const char* fnameStem, size_t lineBufSize)
 {
     time_t rawtime;
     struct tm* info;
@@ -15,9 +15,9 @@ FILE* open_data_file(const char* fname_stem)
     time(&rawtime);
     info = localtime(&rawtime);
 
-    strftime(time_buf, 128, "%y%m%d-%H%M%S", info);
-    snprintf(fname_buf, 256, "%s_%s.csv", fname_stem, time_buf);
-    return fopen(fname_buf, "w");
+    strftime(timeBuf, 128, "%y%m%d%H%M%S", info);
+    snprintf(fnameBuf, 256, "%s_%luB_%s.csv", fnameStem, lineBufSize, timeBuf);
+    return fopen(fnameBuf, "w");
 }
 
 // flush cache line
@@ -34,26 +34,29 @@ __attribute__((always_inline)) inline uint64_t rdtsc()
     return a | ((uint64_t)d << 32);
 }
 
-char data_line_buf[255];
-char lineBuffer[64];
+size_t LINE_BUFFER_SIZES[] = { 64, 128 }; // in Bytes
 long int rep;
 
-void memtest()
+void memtest(size_t lineBufSize)
 {
-    FILE* data_fp;
     uint64_t start, end, clock;
-    char* lineBuffer = (char*) malloc(64);
-    char* lineBufferCopy = (char*) malloc(64);
+    char* lineBuffer = (char*) malloc(lineBufSize);
+    char* lineBufferCopy = (char*) malloc(lineBufSize);
+    FILE* dataFp = open_data_file("data", lineBufSize);
 
-    // open output data file
-    data_fp = open_data_file("data");
-    if(data_fp == NULL) {
+    // some error checking on allocs
+    if(lineBuffer == NULL || lineBufferCopy == NULL)
+    {
+        perror("bad buffer alloc!");
+        exit(-1);
+    }
+    else if(dataFp == NULL) {
         perror("couldnt open output data file!");
         exit(-1);
     }
 
     // populate line buf
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < lineBufSize; i++) {
         lineBuffer[i] = '1';
     }
 
@@ -62,30 +65,36 @@ void memtest()
     for (rep = 0; rep < REPEAT; rep++) {
 
         start = rdtsc();
-        memcpy(lineBufferCopy, lineBuffer, 64);
+        memcpy(lineBufferCopy, lineBuffer, lineBufSize);
         end = rdtsc();
 
         clflush(lineBuffer);
         clflush(lineBufferCopy);
         clock = clock + (end - start);
 
-        printf("%lu ticks to copy 64B\n", (end-start));
-
-        // write bu
-        snprintf(data_line_buf, 256, "%lu,\n", (end-start));
-        fputs(data_line_buf, data_fp);
+        // print progress & write to output file
+        if(rep % 100000 == 0)
+        {
+            printf("rep %lu: took %lu ticks to copy %luB\n", rep, (end-start), lineBufSize);
+        }
+        fprintf(dataFp, "%lu,\n", (end-start));
     }
 
-    printf("took %lu ticks total\n", clock);
+    printf("buffer size %lu: took %lu ticks total.\n", lineBufSize, clock);
 
     //close output data file
-    fclose(data_fp);
+    fclose(dataFp);
 }
 
 // main
 int main(int ac, char **av)
 {
-    printf("------------------------------\n");
-    memtest();
+    int i;
+
+    for(i = 0; i < sizeof(LINE_BUFFER_SIZES) / sizeof(size_t); i++)
+    {
+        printf("------------------------------\n");
+        memtest(LINE_BUFFER_SIZES[i]);
+    }
     return 0;
 }
