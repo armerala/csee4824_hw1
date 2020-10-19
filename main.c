@@ -4,13 +4,13 @@
 #define REPEAT 1000000
 
 // flush cache line
-static inline void clflush(volatile void *p)
+inline void clflush(volatile void *p)
 {
     asm volatile ("clflush (%0)" :: "r"(p));
 }
 
 // fetch read-time stamp counter
-static inline uint64_t rdtsc()
+inline uint64_t rdtsc()
 {
     unsigned long a, d;
     asm volatile ("rdtsc" : "=a" (a), "=d" (d));
@@ -20,7 +20,7 @@ static inline uint64_t rdtsc()
 char lineBuffer[64];
 long int rep;
 
-static inline void memtest()
+void memtest()
 {
     uint64_t start, end, clock;
     char* lineBuffer = (char*) malloc(64);
