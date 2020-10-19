@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
+
 #define REPEAT 1000000
 
-// opens a csv output file
-char timeBuf[128];
-char fnameBuf[255];
-FILE* open_data_file(const char* fnameStem, size_t lineBufSize)
+//char timeBuf[128];
+size_t format_data_dir_name(char* dirNameBuf, size_t bufSize)
 {
     time_t rawtime;
     struct tm* info;
@@ -15,8 +15,22 @@ FILE* open_data_file(const char* fnameStem, size_t lineBufSize)
     time(&rawtime);
     info = localtime(&rawtime);
 
-    strftime(timeBuf, 128, "%y%m%d%H%M%S", info);
-    snprintf(fnameBuf, 256, "%s_%luB_%s.csv", fnameStem, lineBufSize, timeBuf);
+    return strftime(dirNameBuf, bufSize, "./data_%y%m%d%H%M%S", info);
+    // return snprintf(dirNameBuf, 256, "./data_%s", timeBuf);
+}
+
+// makes the dir with hardcoded 755 permissions
+int make_data_dir(const char* dirName)
+{
+    return mkdir(dirName, 755);
+}
+
+
+// opens a csv output file at the root dir at the data root dir
+char fnameBuf[512];
+FILE* open_data_file(const char* dataRoot, size_t lineBufSize)
+{
+    snprintf(fnameBuf, 512, "%s/%luB.csv", dataRoot, lineBufSize);
     return fopen(fnameBuf, "w");
 }
 
@@ -37,12 +51,12 @@ __attribute__((always_inline)) inline uint64_t rdtsc()
 size_t LINE_BUFFER_SIZES[] = { 64, 128 }; // in Bytes
 long int rep;
 
-void memtest(size_t lineBufSize)
+void memtest(const char* outputDir, size_t lineBufSize)
 {
     uint64_t start, end, clock;
     char* lineBuffer = (char*) malloc(lineBufSize);
     char* lineBufferCopy = (char*) malloc(lineBufSize);
-    FILE* dataFp = open_data_file("data", lineBufSize);
+    FILE* dataFp = open_data_file(outputDir, lineBufSize);
 
     // some error checking on allocs
     if(lineBuffer == NULL || lineBufferCopy == NULL)
@@ -82,19 +96,27 @@ void memtest(size_t lineBufSize)
 
     fprintf(stdout, "buffer size %lu: took %lu ticks total.\n", lineBufSize, clock);
 
-    //close output data file
+    // release resources
     fclose(dataFp);
+    free(lineBufferCopy);
+    free(lineBuffer);
 }
 
 // main
 int main(int ac, char **av)
 {
     int i;
+    char dataDirName[256];
 
+    // open data dir
+    format_data_dir_name(dataDirName, 256);
+    make_data_dir(dataDirName);
+
+    // run various memtests
     for(i = 0; i < sizeof(LINE_BUFFER_SIZES) / sizeof(size_t); i++)
     {
         fprintf(stdout, "------------------------------\n");
-        memtest(LINE_BUFFER_SIZES[i]);
+        memtest(dataDirName, LINE_BUFFER_SIZES[i]);
     }
     return 0;
 }
