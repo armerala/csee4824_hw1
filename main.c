@@ -4,13 +4,13 @@
 #define REPEAT 1000000
 
 // flush cache line
-inline void clflush(volatile void *p)
+__attribute__((always_inline)) inline void clflush(volatile void *p) 
 {
     asm volatile ("clflush (%0)" :: "r"(p));
 }
 
 // fetch read-time stamp counter
-inline uint64_t rdtsc()
+__attribute__((always_inline)) inline uint64_t rdtsc()
 {
     unsigned long a, d;
     asm volatile ("rdtsc" : "=a" (a), "=d" (d));

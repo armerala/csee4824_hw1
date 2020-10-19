@@ -1,6 +1,6 @@
 # Compile settings
 CC      := gcc
-CCFLAGS := -Wall --std=gnu17 -O3
+CCFLAGS := -Wall --std=gnu17
 LDFLAGS :=
 TARGET  := memtest
 
