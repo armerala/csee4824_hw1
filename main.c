@@ -6,8 +6,11 @@
 
 #define REPEAT 1000000
 
-//char timeBuf[128];
-size_t format_data_dir_name(char* dirNameBuf, size_t bufSize)
+// CHANGE THIS TO CHANGE TESTED SIZES
+size_t LINE_BUFFER_SIZES[] = { 64, 128 }; // in Bytes
+
+// writes the name data_<date-time> to a buffer
+size_t format_data_dir_name(char* buf, size_t bufSize)
 {
     time_t rawtime;
     struct tm* info;
@@ -15,8 +18,7 @@ size_t format_data_dir_name(char* dirNameBuf, size_t bufSize)
     time(&rawtime);
     info = localtime(&rawtime);
 
-    return strftime(dirNameBuf, bufSize, "./data_%y%m%d%H%M%S", info);
-    // return snprintf(dirNameBuf, 256, "./data_%s", timeBuf);
+    return strftime(buf, bufSize, "./data_%y%m%d%H%M%S", info);
 }
 
 // makes the dir with hardcoded 755 permissions
@@ -48,17 +50,19 @@ __attribute__((always_inline)) inline uint64_t rdtsc()
     return a | ((uint64_t)d << 32);
 }
 
-size_t LINE_BUFFER_SIZES[] = { 64, 128 }; // in Bytes
-long int rep;
 
-void memtest(const char* outputDir, size_t lineBufSize)
+// runs the memory test for lineBufSize writes, 
+// outputting generated data to a file,
+// which it will put into the directory indicated by dataDirName
+void memtest(const char* dataDirName, size_t lineBufSize)
 {
+    long int rep;
     uint64_t start, end, clock;
     char* lineBuffer = (char*) malloc(lineBufSize);
     char* lineBufferCopy = (char*) malloc(lineBufSize);
-    FILE* dataFp = open_data_file(outputDir, lineBufSize);
+    FILE* dataFp = open_data_file(dataDirName, lineBufSize);
 
-    // some error checking on allocs
+    // error check allocs
     if(lineBuffer == NULL || lineBufferCopy == NULL)
     {
         perror("bad buffer alloc!");
@@ -74,10 +78,10 @@ void memtest(const char* outputDir, size_t lineBufSize)
         lineBuffer[i] = '1';
     }
 
-    // clock memcpy for line buf REPEAT times
     clock = 0;
     for (rep = 0; rep < REPEAT; rep++) {
 
+        // clock the memcpy call
         start = rdtsc();
         memcpy(lineBufferCopy, lineBuffer, lineBufSize);
         end = rdtsc();
@@ -86,7 +90,7 @@ void memtest(const char* outputDir, size_t lineBufSize)
         clflush(lineBufferCopy);
         clock = clock + (end - start);
 
-        // print progress & write to output file
+        // write data to output file & progress
         if(rep % 100000 == 0)
         {
             fprintf(stdout, "rep %lu: took %lu ticks to copy %luB\n", rep, (end-start), lineBufSize);
