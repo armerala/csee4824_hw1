@@ -75,12 +75,12 @@ void memtest(size_t lineBufSize)
         // print progress & write to output file
         if(rep % 100000 == 0)
         {
-            printf("rep %lu: took %lu ticks to copy %luB\n", rep, (end-start), lineBufSize);
+            fprintf(stdout, "rep %lu: took %lu ticks to copy %luB\n", rep, (end-start), lineBufSize);
         }
         fprintf(dataFp, "%lu,\n", (end-start));
     }
 
-    printf("buffer size %lu: took %lu ticks total.\n", lineBufSize, clock);
+    fprintf(stdout, "buffer size %lu: took %lu ticks total.\n", lineBufSize, clock);
 
     //close output data file
     fclose(dataFp);
@@ -93,7 +93,7 @@ int main(int ac, char **av)
 
     for(i = 0; i < sizeof(LINE_BUFFER_SIZES) / sizeof(size_t); i++)
     {
-        printf("------------------------------\n");
+        fprintf(stdout, "------------------------------\n");
         memtest(LINE_BUFFER_SIZES[i]);
     }
     return 0;
