@@ -4,7 +4,7 @@
 #include <time.h>
 #include <sys/stat.h>
 
-#define REPEAT 1000
+#define REPEAT 1000000
 
 // CHANGE THIS TO CHANGE TESTED SIZES
 size_t LINE_BUFFER_SIZES[] = { 64, 128, 256, 512, 1024, 
