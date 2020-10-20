@@ -4,10 +4,12 @@
 #include <time.h>
 #include <sys/stat.h>
 
-#define REPEAT 1000000
+#define REPEAT 1000
 
 // CHANGE THIS TO CHANGE TESTED SIZES
-size_t LINE_BUFFER_SIZES[] = { 64, 128 }; // in Bytes
+size_t LINE_BUFFER_SIZES[] = { 64, 128, 256, 512, 1024, 
+                               2048, 4096, 8192, 16384,
+                               32768, 65536, 1048576, 2097152}; // in Bytes
 
 // writes the name data_<date-time> to a buffer
 size_t format_data_dir_name(char* buf, size_t bufSize)
@@ -33,7 +35,7 @@ char fnameBuf[512];
 FILE* open_data_file(const char* dataRoot, size_t lineBufSize)
 {
     snprintf(fnameBuf, 512, "%s/%luB.csv", dataRoot, lineBufSize);
-    return fopen(fnameBuf, "w");
+    return fopen(fnameBuf, "wb");
 }
 
 // flush cache line
@@ -60,6 +62,9 @@ void memtest(const char* dataDirName, size_t lineBufSize)
     uint64_t start, end, clock;
     char* lineBuffer = (char*) malloc(lineBufSize);
     char* lineBufferCopy = (char*) malloc(lineBufSize);
+
+    char dataLineBuf[64];
+    size_t bytesToWrite;
     FILE* dataFp = open_data_file(dataDirName, lineBufSize);
 
     // error check allocs
@@ -95,8 +100,13 @@ void memtest(const char* dataDirName, size_t lineBufSize)
         {
             fprintf(stdout, "rep %lu: took %lu ticks to copy %luB\n", rep, (end-start), lineBufSize);
         }
-        fprintf(dataFp, "%lu,\n", (end-start));
+        bytesToWrite = snprintf(dataLineBuf, 64, "%lu,", (end-start));
+        if(rep == REPEAT - 1) 
+            bytesToWrite -= 1; // account for trailing comma
+        fwrite(&dataLineBuf, sizeof(char), bytesToWrite, dataFp);
     }
+    fputc('\r', dataFp);
+    fputc('\n', dataFp);
 
     fprintf(stdout, "buffer size %lu: took %lu ticks total.\n", lineBufSize, clock);
 
@@ -112,11 +122,9 @@ int main(int ac, char **av)
     int i;
     char dataDirName[256];
 
-    // open data dir
     format_data_dir_name(dataDirName, 256);
     make_data_dir(dataDirName);
 
-    // run various memtests
     for(i = 0; i < sizeof(LINE_BUFFER_SIZES) / sizeof(size_t); i++)
     {
         fprintf(stdout, "------------------------------\n");
