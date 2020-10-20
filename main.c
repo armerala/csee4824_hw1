@@ -23,10 +23,10 @@ size_t format_data_dir_name(char* buf, size_t bufSize)
     return strftime(buf, bufSize, "./data_%y%m%d%H%M%S", info);
 }
 
-// makes the dir with hardcoded 755 permissions
+// makes the dir with hardcoded 0755 permissions
 int make_data_dir(const char* dirName)
 {
-    return mkdir(dirName, 755);
+    return mkdir(dirName, (mode_t)0755);
 }
 
 
