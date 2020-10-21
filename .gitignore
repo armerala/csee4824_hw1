@@ -51,4 +51,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# our specific ignores
 data_*/
+*.png

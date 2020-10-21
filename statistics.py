@@ -58,7 +58,7 @@ if __name__ == "__main__":
     plt.ylabel('Ticks')
     plt.xlabel('Statistics')
     plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=4)
-    plt.savefig("statistics_2.png", dpi = 300, bbox_inches='tight')
+    plt.savefig("./statistics_2.png", dpi = 300, bbox_inches='tight')
     plt.close()
 
 

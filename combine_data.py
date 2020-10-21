@@ -3,6 +3,8 @@ import os
 import glob
 import numpy as np
 
+from utils import path_leaf
+
 def usage():
     print("python combine_data.py <data-dir-path>")
 
@@ -30,8 +32,7 @@ if __name__ == "__main__":
     for i,data_fname in enumerate(data_fnames):
 
         print("processing", data_fname)
-        _, data_fname_tail = os.path.split(data_fname)
-        header_items.append(os.path.splitext(data_fname_tail)[0])
+        header_items.append(path_leaf(data_fname))
 
         data = np.loadtxt(data_fname, delimiter=',', dtype=np.uint64)
         if(data_combined is None): # lazy-init when we know a reasonable size
