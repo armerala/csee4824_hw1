@@ -25,9 +25,14 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # combine
+    header_items = []
     data_combined = None
     for i,data_fname in enumerate(data_fnames):
+
         print("processing", data_fname)
+        _, data_fname_tail = os.path.split(data_fname)
+        header_items.append(os.path.splitext(data_fname_tail)[0])
+
         data = np.loadtxt(data_fname, delimiter=',', dtype=np.uint64)
         if(data_combined is None): # lazy-init when we know a reasonable size
             data_combined = np.empty([data.shape[0], len(data_fnames)], dtype=np.uint64)
@@ -35,4 +40,4 @@ if __name__ == "__main__":
 
     # gen output file
     print("saving output to combined.csv")
-    np.savetxt(os.path.join(data_dir, "combined.csv"), data_combined, delimiter=',')
+    np.savetxt(os.path.join(data_dir, "combined.csv"), data_combined, delimiter=',', header=','.join(header_items))
