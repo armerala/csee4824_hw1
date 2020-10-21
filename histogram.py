@@ -4,8 +4,11 @@ import os
 import matplotlib.pyplot as plt
 import glob
 
+from utils import path_leaf
+
 if __name__ == "__main__":
-# get data dir path from arvv
+
+    # get data dir path from argv
     if(len(sys.argv) != 2):
         sys.exit(1)
 
@@ -14,11 +17,11 @@ if __name__ == "__main__":
         print("path '" + data_dir + "' is not a valid directory!")
         sys.exit(1)
 
-    path = data_dir + "/*.csv"
+    path = os.path.join(data_dir, "*B.csv")
     #Spread out the values across the histogram by taking out the top 99.5 percentile (removing high outliers)
     for fname in glob.glob(path):
-        data = np.loadtxt(open(fname, "rb"), delimiter=",")
-        buffer_name = fname.split('/',1)[1][:-4]
+        data = np.loadtxt(fname, delimiter=",")
+        buffer_name = path_leaf(fname)
         plt.hist(data, range = (0, np.percentile(data, 99.5)))
         plt.title(buffer_name + " Adjusted")
         plt.ylabel('Count')
@@ -29,8 +32,8 @@ if __name__ == "__main__":
 
     #No adjustment to graph
     for fname in glob.glob(path):
-        data = np.loadtxt(open(fname, "rb"), delimiter=",")
-        buffer_name = fname.split('/',1)[1][:-4]
+        data = np.loadtxt(fname, delimiter=",")
+        buffer_name = path_leaf(fname)
         plt.hist(data)
         plt.title(buffer_name)
         plt.ylabel('Count')

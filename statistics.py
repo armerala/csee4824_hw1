@@ -6,8 +6,10 @@ import glob
 import pandas as pd
 from collections import OrderedDict
 
+from utils import path_leaf
+
 if __name__ == "__main__":
-# get data dir path from arvv
+    # get data dir path from argv
     if(len(sys.argv) != 2):
         sys.exit(1)
 
@@ -17,11 +19,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     data = {}
-    path = data_dir + "/*.csv"
+    path = os.path.join(data_dir, "*B.csv")
     for fname in glob.glob(path):
-        buffer_data = np.loadtxt(open(fname, "rb"), delimiter=",")
-        buffer_data = np.sort(buffer_data).astype(int)
-        buffer_name = fname.split('/',1)[1][:-4]
+
+        buffer_data = np.loadtxt(fname, delimiter=",")
+        buffer_data = np.sort(buffer_data).astype(np.uint64)
+        buffer_name = path_leaf(fname) 
+
         #get statistics after removing outliers
         percentile_value = np.percentile(buffer_data, 99.5, interpolation = 'nearest')
         length = len(np.where(buffer_data == percentile_value)[0])
